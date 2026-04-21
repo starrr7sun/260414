@@ -12,7 +12,8 @@ const weekData = [
   { week: "W4", title: "week4", url: "week4/index.html" },
   { week: "W5", title: "week5", url: "week5/index.html" },
   { week: "W6", title: "week6", url: "week6/index.html" },
-  { week: "W7", title: "week7", url: "week7/index.html" }
+  { week: "W7", title: "week7", url: "week7/index.html" },
+  { week: "W8", title: "week8", url: "week8/index.html" }
 ];
 
 function setup() {
@@ -45,22 +46,14 @@ function setup() {
   closeWheel.hide(); // 預設隱藏
 
   // 初始化週次節點 (排列邏輯：最上方 1 個，其餘 2 個一組)
+  let maxShelf = 3; // 固定為 4 層架子 (索引 0, 1, 2, 3)
   for (let i = 0; i < weekData.length; i++) {
-    let shelfIndex; // 第幾層架子
-    let xOffset = 0; // 水平偏移位置
+    // 計算層架索引：i=0,1 為底層(3)；i=6,7 為頂層(0)
+    let shelfIndex = maxShelf - Math.floor(i / 2);
+    // 水平偏移：偶數索引在左，奇數索引在右
+    let xOffset = (i % 2 === 0) ? -40 : 40;
 
-    if (i === weekData.length - 1) {
-      // 最後一項 (W7) 放在最上方中央
-      shelfIndex = 0;
-      xOffset = 0;
-    } else {
-      // 其他項 (W1-W6) 兩兩一組
-      // i=0,1 -> 第3層; i=2,3 -> 第2層; i=4,5 -> 第1層
-      shelfIndex = 3 - Math.floor(i / 2);
-      xOffset = (i % 2 === 0) ? -40 : 40; // 偶數在左，奇數在右
-    }
-
-    let y = map(shelfIndex, 0, 3, 100, height - 100);
+    let y = map(shelfIndex, 0, maxShelf, 100, height - 100);
     nodes.push(new SeedNode(y, weekData[i], xOffset));
   }
 }
@@ -115,9 +108,10 @@ function drawCabinet() {
   stroke(60, 35, 20);
   strokeWeight(3);
 
-  // 繪製四層固定架子與側邊展示的輪架
-  for (let i = 0; i <= 3; i++) {
-    let shelfBaseY = map(i, 0, 3, 100, height - 100);
+  // 根據節點數量動態繪製架子
+  let maxShelf = 3; 
+  for (let i = 0; i <= maxShelf; i++) {
+    let shelfBaseY = map(i, 0, maxShelf, 100, height - 100);
     let shelfLineY = shelfBaseY + 30;
     
     // 繪製層架線條
