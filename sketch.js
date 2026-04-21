@@ -1,6 +1,7 @@
 let nodes = [];
 let vinePoints = [];
 let displayFrame;
+let closeWheel;
 
 const weekData = [
   { week: "W1", title: "week1", url: "week1/index.html" },
@@ -16,14 +17,28 @@ function setup() {
   // 建立畫布，寬度預留一部分給左側時間軸
   let canvas = createCanvas(windowWidth, windowHeight);
   
-  // 建立 iframe 顯示區域 (佔據右側 60% 空間)
-  displayFrame = createImg('https://p5js.org/assets/img/p5js-logo.svg', 'p5js logo'); // 初始占位圖
+  // 建立 iframe 顯示區域
   displayFrame = createElement('iframe');
   displayFrame.position(width * 0.4, 20);
   displayFrame.size(width * 0.55, height - 40);
   displayFrame.style('border', 'none');
   displayFrame.style('border-radius', '10px');
   displayFrame.style('box-shadow', '0 0 15px rgba(0,0,0,0.1)');
+  displayFrame.hide(); // 預設隱藏
+
+  // 建立關閉用的滑板輪按鈕
+  closeWheel = createButton('');
+  updateCloseWheelPosition();
+  // 樣式設定：模擬一顆紅色的滑板輪
+  closeWheel.style('width', '40px');
+  closeWheel.style('height', '40px');
+  closeWheel.style('border-radius', '50%');
+  closeWheel.style('background', 'radial-gradient(circle, #555 20%, #ff4d4d 25%, #ff4d4d 100%)');
+  closeWheel.style('border', '3px solid #333');
+  closeWheel.style('cursor', 'pointer');
+  closeWheel.style('box-shadow', '2px 2px 5px rgba(0,0,0,0.3)');
+  closeWheel.mousePressed(hideIframe);
+  closeWheel.hide(); // 預設隱藏
 
   // 初始化週次節點 (排列邏輯：最上方 1 個，其餘 2 個一組)
   for (let i = 0; i < weekData.length; i++) {
@@ -57,6 +72,16 @@ function draw() {
     node.update();
     node.display();
   }
+}
+
+function updateCloseWheelPosition() {
+  // 擺放在 iframe 的右上角位置
+  closeWheel.position(width * 0.95 - 20, 10);
+}
+
+function hideIframe() {
+  displayFrame.hide();
+  closeWheel.hide();
 }
 
 function drawCabinet() {
@@ -226,6 +251,8 @@ class SeedNode {
     let d = dist(mouseX, mouseY, this.currentX, this.y);
     if (d < this.size) {
       displayFrame.attribute('src', this.data.url);
+      displayFrame.show();
+      closeWheel.show();
     }
   }
 }
@@ -238,5 +265,7 @@ function mousePressed() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  // 這裡可以視需求重新調整節點位置或 iframe 大小
+  displayFrame.position(width * 0.4, 20);
+  displayFrame.size(width * 0.55, height - 40);
+  updateCloseWheelPosition();
 }
