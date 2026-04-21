@@ -2,6 +2,8 @@ let nodes = [];
 let vinePoints = [];
 let displayFrame;
 let closeWheel;
+let sk8X; // 滑板 X 座標
+let sk8Speed = 2; // 滑板移動速度
 
 const weekData = [
   { week: "W1", title: "week1", url: "week1/index.html" },
@@ -17,6 +19,8 @@ function setup() {
   // 建立畫布，寬度預留一部分給左側時間軸
   let canvas = createCanvas(windowWidth, windowHeight);
   
+  sk8X = width * 0.5; // 初始化滑板位置
+
   // 建立 iframe 顯示區域
   displayFrame = createElement('iframe');
   displayFrame.position(width * 0.4, 20);
@@ -66,6 +70,12 @@ function draw() {
 
   drawCabinet();
   drawGroundSkateboard();
+
+  // 更新滑板位置 (左右來回移動)
+  sk8X += sk8Speed;
+  if (sk8X > width - 100 || sk8X < 100) {
+    sk8Speed *= -1; // 撞到邊界就反彈
+  }
 
   // 更新並顯示所有節點
   for (let node of nodes) {
@@ -138,7 +148,6 @@ function drawTruck(x, y) {
 
 function drawGroundSkateboard() {
   // 將滑板放在畫布下方中央偏右的位置
-  let sk8X = width * 0.5;
   let sk8Y = height - 40;
   
   push();
