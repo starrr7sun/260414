@@ -25,18 +25,32 @@ function setup() {
   displayFrame.style('border-radius', '10px');
   displayFrame.style('box-shadow', '0 0 15px rgba(0,0,0,0.1)');
 
-  // 初始化週次節點
+  // 初始化週次節點 (排列邏輯：最上方 1 個，其餘 2 個一組)
   for (let i = 0; i < weekData.length; i++) {
-    // 節點沿著 y 軸分佈，從下往上生長
-    let y = map(i, 0, weekData.length - 1, height - 100, 100);
-    nodes.push(new SeedNode(y, weekData[i]));
+    let shelfIndex; // 第幾層架子
+    let xOffset = 0; // 水平偏移位置
+
+    if (i === weekData.length - 1) {
+      // 最後一項 (W7) 放在最上方中央
+      shelfIndex = 0;
+      xOffset = 0;
+    } else {
+      // 其他項 (W1-W6) 兩兩一組
+      // i=0,1 -> 第3層; i=2,3 -> 第2層; i=4,5 -> 第1層
+      shelfIndex = 3 - Math.floor(i / 2);
+      xOffset = (i % 2 === 0) ? -40 : 40; // 偶數在左，奇數在右
+    }
+
+    let y = map(shelfIndex, 0, 3, 100, height - 100);
+    nodes.push(new SeedNode(y, weekData[i], xOffset));
   }
 }
 
 function draw() {
-  background(245, 250, 240); // 淺綠色背景，營造自然感
+  background(40, 44, 52); // 深色柏油路質感
 
-  drawVine();
+  drawCabinet();
+  drawGroundSkateboard();
 
   // 更新並顯示所有節點
   for (let node of nodes) {
@@ -45,60 +59,166 @@ function draw() {
   }
 }
 
-function drawVine() {
-  noFill();
-  stroke(34, 139, 34, 150); // 森林綠，帶透明度
-  strokeWeight(6);
-  
-  beginShape();
-  // 從地底（畫布底部）開始繪製 vertex
-  for (let y = height; y > 50; y -= 5) {
-    // 利用 sin 讓藤蔓產生波浪擺動感
-    let xOffset = sin(y * 0.01 + frameCount * 0.02) * 30;
-    let x = width * 0.2 + xOffset;
-    vertex(x, y);
+function drawCabinet() {
+  let cabX = width * 0.2 - 160; // 再次加寬並調整位置
+  let cabW = 320; // 寬度增加到 320，讓旁邊有空間擺輪架
+  let topY = 50;
+  let botY = height - 50;
+
+  // 繪製櫃子主體 (木質感)
+  fill(80, 50, 30);
+  stroke(40, 20, 10);
+  strokeWeight(4);
+  rect(cabX, topY, cabW, botY - topY, 5);
+
+  // 繪製櫃子內層陰影
+  fill(40, 25, 15);
+  noStroke();
+  rect(cabX + 10, topY + 10, cabW - 20, botY - topY - 20);
+
+  // 繪製層架
+  stroke(60, 35, 20);
+  strokeWeight(3);
+
+  // 繪製四層固定架子與側邊展示的輪架
+  for (let i = 0; i <= 3; i++) {
+    let shelfBaseY = map(i, 0, 3, 100, height - 100);
+    let shelfLineY = shelfBaseY + 30;
+    
+    // 繪製層架線條
+    line(cabX + 10, shelfLineY, cabX + cabW - 10, shelfLineY);
+    
+    // 在架子左右兩側擺放輪架 (不再跟隨輪子)
+    drawTruck(width * 0.2 - 110, shelfBaseY);
+    drawTruck(width * 0.2 + 110, shelfBaseY);
   }
-  endShape();
+}
+
+function drawTruck(x, y) {
+  push();
+  translate(x, y);
+  // 輪架主軸 (Axle)
+  stroke(160);
+  strokeWeight(8);
+  line(-35, 0, 35, 0);
+  // 輪架底座 (Baseplate)
+  fill(120);
+  noStroke();
+  rect(-12, -5, 24, 15, 2);
+  // 中心避震墊 (Bushings)
+  fill(200, 50, 50);
+  ellipse(0, 5, 10, 8);
+  pop();
+}
+
+function drawGroundSkateboard() {
+  // 將滑板放在畫布下方中央偏右的位置
+  let sk8X = width * 0.5;
+  let sk8Y = height - 40;
+  
+  push();
+  translate(sk8X, sk8Y);
+
+  // 1. 繪製輪子 (四顆輪子，側面看只會看到兩對的前方)
+  fill(220);
+  noStroke();
+  ellipse(-60, 10, 22, 22); // 後輪
+  ellipse(60, 10, 22, 22);  // 前輪
+  fill(80);
+  ellipse(-60, 10, 8, 8);   // 培林
+  ellipse(60, 10, 8, 8);
+
+  // 2. 繪製輪架 (Trucks) - 側視圖
+  fill(160);
+  rect(-65, 0, 10, 10);
+  rect(55, 0, 10, 10);
+  
+  // 3. 繪製板身側影 (Deck Side View)
+  // 楓木層感
+  strokeWeight(1);
+  for (let i = 0; i < 6; i++) {
+    stroke(120 - i * 10, 90 - i * 10, 60 - i * 10);
+    line(-80, -5 + i, 80, -5 + i);
+  }
+
+  // 板頭與板尾的翹起 (Nose & Tail)
+  noFill();
+  stroke(80, 60, 40);
+  strokeWeight(5);
+  // 使用弧線繪製翹起的曲線
+  arc(-90, -12, 30, 25, 0.4, PI - 0.8); // Tail
+  arc(90, -12, 30, 25, 0.8, PI - 0.4);  // Nose
+
+  // 砂紙面 (Griptape)
+  stroke(20);
+  strokeWeight(2);
+  line(-80, -6, 80, -6);
+
+  pop();
 }
 
 class SeedNode {
-  constructor(y, data) {
+  constructor(y, data, offsetX = 0) {
     this.y = y;
     this.data = data;
-    this.baseX = width * 0.2;
+    this.baseX = width * 0.2 + offsetX;
     this.currentX = this.baseX;
-    this.size = 20;
+    this.size = 40; // 基礎尺寸變大
     this.isHovered = false;
-    this.targetSize = 20;
+    this.targetSize = 40;
+    this.nodeColor = color(random(100, 255), random(100, 255), random(100, 255)); // 每顆隨機顏色
   }
 
   update() {
-    // 同步藤蔓的擺動位置
-    this.currentX = this.baseX + sin(this.y * 0.01 + frameCount * 0.02) * 30;
+    // 移除擺動邏輯，固定在櫃子中心
+    this.currentX = this.baseX;
 
     // 偵測滑鼠懸停 (簡單的距離檢測)
     let d = dist(mouseX, mouseY, this.currentX, this.y);
-    if (d < this.size) {
+    if (d < this.size / 2 + 5) { // 稍微優化判斷範圍
       this.isHovered = true;
-      this.targetSize = 45; // 懸停時變大 (開花效果)
+      this.targetSize = 70; // 懸停時變更大
     } else {
       this.isHovered = false;
-      this.targetSize = 20;
+      this.targetSize = 40;
     }
     this.size = lerp(this.size, this.targetSize, 0.1);
   }
 
   display() {
-    fill(this.isHovered ? color(255, 105, 180) : color(144, 238, 144));
-    stroke(255);
-    strokeWeight(2);
-    ellipse(this.currentX, this.y, this.size);
+    push();
+    translate(this.currentX, this.y);
 
     if (this.isHovered) {
-      fill(50);
+      // 繪製摩擦火花或噴漆感 (Sparks/Spray)
+      for (let i = 0; i < 8; i++) {
+        stroke(255, 200, 0, random(100, 255));
+        strokeWeight(2);
+        line(0, 0, random(-this.size, this.size), random(-this.size, this.size));
+      }
+    }
+
+    // 繪製滑板輪 (Skate Wheel)
+    noStroke();
+    // 輪子本體
+    fill(this.nodeColor); 
+    ellipse(0, 0, this.size);
+    
+    // 輪胎中心 (Bearing/培林)
+    fill(50);
+    ellipse(0, 0, this.size * 0.4);
+    fill(150);
+    ellipse(0, 0, this.size * 0.15);
+    
+    pop();
+
+    if (this.isHovered) {
+      fill(255);
+      textSize(16);
+      textStyle(BOLD);
       noStroke();
-      textAlign(RIGHT, CENTER);
-      text(`${this.data.week}: ${this.data.title}`, this.currentX - 30, this.y);
+      textAlign(CENTER, BOTTOM);
+      text(`[${this.data.week}] ${this.data.title.toUpperCase()}`, this.currentX, this.y - 45); // 配合尺寸上移文字
     }
   }
 
